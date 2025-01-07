@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 import type { ReactNode } from "react";
 import { ContextProviders } from "~/context/ContextProviders";
+import { Toaster } from "~/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "School dashboard",
@@ -17,7 +18,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
-        <ContextProviders>{children}</ContextProviders>
+        <ContextProviders>
+          {children}
+          <Toaster />
+        </ContextProviders>
       </body>
     </html>
   );
