@@ -8,8 +8,10 @@ datasource db {
 }
 
 model Admin {
-  id       String @id
-  username String @unique
+  id       String  @id
+  username String  @unique
+  password String?
+  name     String
 }
 
 model Student {

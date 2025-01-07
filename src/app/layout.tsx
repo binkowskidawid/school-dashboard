@@ -3,6 +3,7 @@ import "~/styles/globals.css";
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 import type { ReactNode } from "react";
+import { ContextProviders } from "~/context/ContextProviders";
 
 export const metadata: Metadata = {
   title: "School dashboard",
@@ -15,7 +16,9 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
-      <body>{children}</body>
+      <body>
+        <ContextProviders>{children}</ContextProviders>
+      </body>
     </html>
   );
 }
