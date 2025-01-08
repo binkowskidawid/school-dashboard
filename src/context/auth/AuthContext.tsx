@@ -3,9 +3,10 @@
 import { type Admin } from "@prisma/client";
 import type { PropsWithChildren } from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { deleteCookie, getCookie, setCookie } from "cookies-next";
+import { deleteCookie, getCookie } from "cookies-next";
 import { useToast } from "~/hooks/use-toast";
-import { checkCredentials } from "~/utils/login/checkCredentials";
+import { type LoginCredentials, useLogin } from "~/hooks/useLogin";
+import { useRouter } from "next/navigation";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -17,6 +18,7 @@ type AuthContextProps = {
   }) => Promise<void>;
   signOut: () => Promise<void>;
   status: AuthStatus;
+  isPending: boolean;
 };
 
 const AuthContext = createContext<AuthContextProps>({
@@ -24,6 +26,7 @@ const AuthContext = createContext<AuthContextProps>({
   signIn: () => Promise.resolve(),
   signOut: () => Promise.resolve(),
   status: "loading",
+  isPending: false,
 });
 
 export function AuthProvider({ children }: PropsWithChildren) {
@@ -31,6 +34,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [status, setStatus] = useState<AuthStatus>("loading");
 
   const { toast } = useToast();
+  const { mutate: login, isPending } = useLogin();
+  const router = useRouter();
 
   useEffect(() => {
     if (status !== "loading") return;
@@ -48,14 +53,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, []);
 
-  const signIn = async ({
-    username,
-    password,
-  }: {
-    username: string;
-    password: string;
-  }) => {
-    if (!username || !password) {
+  const signIn = async (credentials: LoginCredentials) => {
+    if (!credentials.username || !credentials.password) {
       toast({
         title: "Invalid credentials",
         description: "Please enter a valid username and password.",
@@ -63,32 +62,23 @@ export function AuthProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    try {
-      const adminData = await checkCredentials(username, password);
-
-      if (!adminData) {
+    login(credentials, {
+      onSuccess: (adminData) => {
+        setAdmin(adminData);
+        setStatus("authenticated");
         toast({
-          title: "Invalid credentials",
-          description: "Please enter a valid username and password.",
+          title: "Welcome back!",
+          description: "You have successfully signed in 🎉.",
         });
-        return;
-      }
-
-      await setCookie("admin", JSON.stringify(adminData), {
-        maxAge: 30 * 24 * 60 * 60, // 30 DAYS
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        path: "/",
-      });
-      setAdmin(adminData);
-      setStatus("authenticated");
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in 🎉.",
-      });
-    } catch (error) {
-      console.error("Error signing in:", error);
-    }
+        router.push("/");
+      },
+      onError: (error) => {
+        toast({
+          title: "Sign in failed",
+          description: error.message,
+        });
+      },
+    });
   };
 
   const signOut = async () => {
@@ -102,7 +92,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   };
 
   return (
-    <AuthContext.Provider value={{ admin, signIn, signOut, status }}>
+    <AuthContext.Provider value={{ admin, signIn, signOut, status, isPending }}>
       {children}
     </AuthContext.Provider>
   );

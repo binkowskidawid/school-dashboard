@@ -8,15 +8,33 @@ importers:
 
   .:
     dependencies:
+      '@hookform/resolvers':
+        specifier: ^3.10.0
+        version: 3.10.0(react-hook-form@7.54.2(react@19.0.0))
       '@prisma/client':
         specifier: ^6.1.0
         version: 6.1.0(prisma@6.1.0)
+      '@radix-ui/react-label':
+        specifier: ^2.1.1
+        version: 2.1.1(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@radix-ui/react-slot':
+        specifier: ^1.1.1
+        version: 1.1.1(@types/react@19.0.3)(react@19.0.0)
       '@radix-ui/react-toast':
         specifier: ^1.2.4
         version: 1.2.4(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@t3-oss/env-nextjs':
         specifier: ^0.11.1
         version: 0.11.1(typescript@5.7.2)(zod@3.24.1)
+      '@tanstack/react-query':
+        specifier: ^5.62.16
+        version: 5.62.16(react@19.0.0)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.62.16
+        version: 5.62.16(@tanstack/react-query@5.62.16(react@19.0.0))(react@19.0.0)
+      '@testing-library/user-event':
+        specifier: ^14.5.2
+        version: 14.5.2(@testing-library/dom@10.4.0)
       axios:
         specifier: ^1.7.9
         version: 1.7.9
@@ -44,6 +62,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
+      react-hook-form:
+        specifier: ^7.54.2
+        version: 7.54.2(react@19.0.0)
       tailwind-merge:
         specifier: ^2.6.0
         version: 2.6.0
@@ -484,6 +505,11 @@ packages:
     resolution: {integrity: sha512-zSkKow6H5Kdm0ZUQUB2kV5JIXqoG0+uH5YADhaEHswm664N9Db8dXSi0nMJpacpMf+MyyglF1vnZohpEg5yUtg==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
+  '@hookform/resolvers@3.10.0':
+    resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
+    peerDependencies:
+      react-hook-form: ^7.0.0
+
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
     engines: {node: '>=18.18.0'}
@@ -853,6 +879,19 @@ packages:
       '@types/react-dom':
         optional: true
 
+  '@radix-ui/react-label@2.1.1':
+    resolution: {integrity: sha512-UUw5E4e/2+4kFMH7+YxORXGWggtY6sM8WIwh5RZchhLuUg2H1hc98Py+pr8HMz6rdaYrK2t296ZEjYLOCO5uUw==}
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+
   '@radix-ui/react-portal@1.1.3':
     resolution: {integrity: sha512-NciRqhXnGojhT93RPyDaMPfLH3ZSl4jjIFbZQ1b/vxvZEdHsBZ49wP9w8L3HzUQwep01LcWtkUvm0OVB5JAHTw==}
     peerDependencies:
@@ -1002,6 +1041,23 @@ packages:
       typescript:
         optional: true
 
+  '@tanstack/query-core@5.62.16':
+    resolution: {integrity: sha512-9Sgft7Qavcd+sN0V25xVyo0nfmcZXBuODy3FVG7BMWTg1HMLm8wwG5tNlLlmSic1u7l1v786oavn+STiFaPH2g==}
+
+  '@tanstack/query-devtools@5.62.16':
+    resolution: {integrity: sha512-3ff6UBJr0H3nIhfLSl9911rvKqXf0u4B58jl0uYdDWLqPk9pCvYIbxC35cGxK2+8INl4IaFVUHb/IdgWrNkg3Q==}
+
+  '@tanstack/react-query-devtools@5.62.16':
+    resolution: {integrity: sha512-EjF0tgHnWYcqhk8KxGKnmGlYcnldhWjW3bbH2WZqxo7t41ytzkIQtZ/UyLph//YMmZZE/RVTmSo3rGq/EG9iCA==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.62.16
+      react: ^18 || ^19
+
+  '@tanstack/react-query@5.62.16':
+    resolution: {integrity: sha512-XJIZNj65d2IdvU8VBESmrPakfIm6FSdHDzrS1dPrAwmq3ZX+9riMh/ZfbNQHAWnhrgmq7KoXpgZSRyXnqMYT9A==}
+    peerDependencies:
+      react: ^18 || ^19
+
   '@testing-library/dom@10.4.0':
     resolution: {integrity: sha512-pemlzrSESWbdAloYml3bAJMEfNh1Z7EduzqPKprCH5S341frlpYnUEW0H72dLxa6IsYr+mPno20GiSm+h9dEdQ==}
     engines: {node: '>=18'}
@@ -1024,6 +1080,12 @@ packages:
         optional: true
       '@types/react-dom':
         optional: true
+
+  '@testing-library/user-event@14.5.2':
+    resolution: {integrity: sha512-YAh82Wh4TIrxYLmfGcixwD18oIjyC1pFQC2Y01F2lzV2HTMiYrI0nze0FD0ocB//CKS/7jIUgae+adPqxK5yCQ==}
+    engines: {node: '>=12', npm: '>=6'}
+    peerDependencies:
+      '@testing-library/dom': '>=7.21.4'
 
   '@tootallnate/once@2.0.0':
     resolution: {integrity: sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==}
@@ -2855,6 +2917,12 @@ packages:
     peerDependencies:
       react: ^19.0.0
 
+  react-hook-form@7.54.2:
+    resolution: {integrity: sha512-eHpAUgUjWbZocoQYUHposymRb4ZP6d0uwUnooL2uOybA9/3tPUvoAKqEWK1WaSiTxxOfTpffNZP7QwlnM3/gEg==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
+
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -3721,6 +3789,10 @@ snapshots:
     dependencies:
       levn: 0.4.1
 
+  '@hookform/resolvers@3.10.0(react-hook-form@7.54.2(react@19.0.0))':
+    dependencies:
+      react-hook-form: 7.54.2(react@19.0.0)
+
   '@humanfs/core@0.19.1': {}
 
   '@humanfs/node@0.16.6':
@@ -4123,6 +4195,15 @@ snapshots:
       '@types/react': 19.0.3
       '@types/react-dom': 19.0.2(@types/react@19.0.3)
 
+  '@radix-ui/react-label@2.1.1(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+    dependencies:
+      '@radix-ui/react-primitive': 2.0.1(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
+    optionalDependencies:
+      '@types/react': 19.0.3
+      '@types/react-dom': 19.0.2(@types/react@19.0.3)
+
   '@radix-ui/react-portal@1.1.3(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@radix-ui/react-primitive': 2.0.1(@types/react-dom@19.0.2(@types/react@19.0.3))(@types/react@19.0.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -4247,6 +4328,21 @@ snapshots:
     optionalDependencies:
       typescript: 5.7.2
 
+  '@tanstack/query-core@5.62.16': {}
+
+  '@tanstack/query-devtools@5.62.16': {}
+
+  '@tanstack/react-query-devtools@5.62.16(@tanstack/react-query@5.62.16(react@19.0.0))(react@19.0.0)':
+    dependencies:
+      '@tanstack/query-devtools': 5.62.16
+      '@tanstack/react-query': 5.62.16(react@19.0.0)
+      react: 19.0.0
+
+  '@tanstack/react-query@5.62.16(react@19.0.0)':
+    dependencies:
+      '@tanstack/query-core': 5.62.16
+      react: 19.0.0
+
   '@testing-library/dom@10.4.0':
     dependencies:
       '@babel/code-frame': 7.26.2
@@ -4277,6 +4373,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.0.3
       '@types/react-dom': 19.0.2(@types/react@19.0.3)
+
+  '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.0)':
+    dependencies:
+      '@testing-library/dom': 10.4.0
 
   '@tootallnate/once@2.0.0': {}
 
@@ -6500,6 +6600,10 @@ snapshots:
     dependencies:
       react: 19.0.0
       scheduler: 0.25.0
+
+  react-hook-form@7.54.2(react@19.0.0):
+    dependencies:
+      react: 19.0.0
 
   react-is@16.13.1: {}
 

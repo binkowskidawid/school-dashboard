@@ -17,7 +17,7 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
-      <body>
+      <body suppressHydrationWarning>
         <ContextProviders>
           {children}
           <Toaster />
