@@ -1,28 +1,25 @@
 "use client";
 
-import { type Admin } from "@prisma/client";
 import type { PropsWithChildren } from "react";
 import { createContext, useContext, useEffect, useState } from "react";
 import { deleteCookie, getCookie } from "cookies-next";
 import { useToast } from "~/hooks/use-toast";
-import { type LoginCredentials, useLogin } from "~/hooks/useLogin";
 import { useRouter } from "next/navigation";
+import { type LoginCredentials, type User } from "~/types/user";
+import { useLogin } from "~/hooks/useLogin";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 type AuthContextProps = {
-  admin: Admin | null;
-  signIn: (credentials: {
-    username: string;
-    password: string;
-  }) => Promise<void>;
+  user: User | null;
+  signIn: (credentials: LoginCredentials) => Promise<void>;
   signOut: () => Promise<void>;
   status: AuthStatus;
   isPending: boolean;
 };
 
 const AuthContext = createContext<AuthContextProps>({
-  admin: null,
+  user: null,
   signIn: () => Promise.resolve(),
   signOut: () => Promise.resolve(),
   status: "loading",
@@ -30,20 +27,32 @@ const AuthContext = createContext<AuthContextProps>({
 });
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [admin, setAdmin] = useState<Admin | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
 
   const { toast } = useToast();
   const { mutate: login, isPending } = useLogin();
   const router = useRouter();
 
+  const getRoleBasedRoute = (userRole: string) => {
+    const role = userRole.toLowerCase();
+    return `/${role}`;
+  };
+
   useEffect(() => {
     if (status !== "loading") return;
     try {
-      const storedAdmin = getCookie("admin");
-      if (storedAdmin) {
-        setAdmin(JSON.parse(storedAdmin as string) as Admin);
+      const storedUser = getCookie("user");
+      if (storedUser) {
+        const userData = JSON.parse(storedUser as string) as User;
+        setUser(userData);
         setStatus("authenticated");
+        // Redirect to role-specific route if needed
+        const currentPath = window.location.pathname;
+        const expectedPath = getRoleBasedRoute(userData.role);
+        if (currentPath === "/" || !currentPath.startsWith(expectedPath)) {
+          router.push(expectedPath);
+        }
       } else {
         setStatus("unauthenticated");
       }
@@ -51,26 +60,28 @@ export function AuthProvider({ children }: PropsWithChildren) {
       console.error("Error reading cookie:", error);
       setStatus("unauthenticated");
     }
-  }, []);
+  }, [router]);
 
   const signIn = async (credentials: LoginCredentials) => {
     if (!credentials.username || !credentials.password) {
       toast({
         title: "Invalid credentials",
-        description: "Please enter a valid username and password.",
+        description: "Please enter all required fields.",
       });
       return;
     }
 
     login(credentials, {
-      onSuccess: (adminData) => {
-        setAdmin(adminData);
+      onSuccess: (userData) => {
+        setUser(userData);
         setStatus("authenticated");
         toast({
           title: "Welcome back!",
           description: "You have successfully signed in 🎉.",
         });
-        router.push("/");
+        // Redirect to the correct role-based route
+        const roleRoute = getRoleBasedRoute(userData.role);
+        router.push(roleRoute);
       },
       onError: (error) => {
         toast({
@@ -83,16 +94,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const signOut = async () => {
     try {
-      await deleteCookie("admin");
-      setAdmin(null);
+      await deleteCookie("user");
+      setUser(null);
       setStatus("unauthenticated");
+      router.push("/sign-in");
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ admin, signIn, signOut, status, isPending }}>
+    <AuthContext.Provider value={{ user, signIn, signOut, status, isPending }}>
       {children}
     </AuthContext.Provider>
   );

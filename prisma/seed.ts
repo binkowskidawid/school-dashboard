@@ -1,4 +1,5 @@
-import {Day, PrismaClient, UserSex} from "@prisma/client";
+import { Day, PrismaClient, UserSex } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -73,7 +74,10 @@ async function main() {
         sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
         subjects: { connect: [{ id: (i % 10) + 1 }] },
         classes: { connect: [{ id: (i % 6) + 1 }] },
-        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
+        birthday: new Date(
+          new Date().setFullYear(new Date().getFullYear() - 30),
+        ),
+        password: `teacher${i}`,
       },
     });
   }
@@ -86,8 +90,8 @@ async function main() {
         day: Day[
           Object.keys(Day)[
             Math.floor(Math.random() * Object.keys(Day).length)
-            ] as keyof typeof Day
-          ],
+          ] as keyof typeof Day
+        ],
         startTime: new Date(new Date().setHours(new Date().getHours() + 1)),
         endTime: new Date(new Date().setHours(new Date().getHours() + 3)),
         subjectId: (i % 10) + 1,
@@ -108,6 +112,7 @@ async function main() {
         email: `parent${i}@example.com`,
         phone: `123-456-789${i}`,
         address: `Address${i}`,
+        password: `parent${i}`,
       },
     });
   }
@@ -128,7 +133,10 @@ async function main() {
         parentId: `parentId${Math.ceil(i / 2) % 25 || 25}`,
         gradeId: (i % 6) + 1,
         classId: (i % 6) + 1,
-        birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 10)),
+        birthday: new Date(
+          new Date().setFullYear(new Date().getFullYear() - 10),
+        ),
+        password: `student${i}`,
       },
     });
   }

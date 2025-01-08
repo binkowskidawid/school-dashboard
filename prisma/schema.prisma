@@ -8,10 +8,11 @@ datasource db {
 }
 
 model Admin {
-  id       String  @id
-  username String  @unique
+  id       String   @id
+  username String   @unique
   password String?
   name     String
+  role     UserRole @default(ADMIN)
 }
 
 model Student {
@@ -35,6 +36,8 @@ model Student {
   attendances Attendance[]
   results     Result[]
   birthday    DateTime
+  role        UserRole     @default(STUDENT)
+  password    String?
 }
 
 model Teacher {
@@ -53,6 +56,8 @@ model Teacher {
   lessons   Lesson[]
   classes   Class[]
   birthday  DateTime
+  role      UserRole  @default(TEACHER)
+  password  String?
 }
 
 model Parent {
@@ -65,6 +70,8 @@ model Parent {
   address   String
   createdAt DateTime  @default(now())
   students  Student[]
+  role      UserRole  @default(PARENT)
+  password  String?
 }
 
 model Grade {
@@ -179,6 +186,13 @@ model Announcement {
 
   classId Int?
   class   Class? @relation(fields: [classId], references: [id])
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  PARENT
+  STUDENT
 }
 
 enum UserSex {

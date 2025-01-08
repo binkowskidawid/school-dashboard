@@ -1,11 +1,20 @@
-export default function HomePage() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-      <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <h1 className="text-5xl font-extrabold tracking-tight text-[hsl(280,100%,70%)] sm:text-[5rem]">
-          School dashboard
-        </h1>
-      </div>
-    </main>
-  );
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import type { User } from "~/types/user";
+
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const userCookie = cookieStore.get("user");
+
+  if (!userCookie) {
+    redirect("/sign-in");
+  }
+
+  try {
+    const userData = JSON.parse(userCookie.value) as User;
+    const roleRoute = `/${userData.role.toLowerCase()}`;
+    redirect(roleRoute);
+  } catch (error) {
+    redirect("/sign-in");
+  }
 }

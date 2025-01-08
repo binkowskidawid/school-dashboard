@@ -1,16 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
-import { type Admin } from "@prisma/client";
 import { setCookie } from "cookies-next";
-
-export interface LoginCredentials {
-  username: string;
-  password: string;
-}
+import { type LoginCredentials, type User } from "~/types/user";
 
 export function useLogin() {
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await fetch("/api/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -20,11 +15,11 @@ export function useLogin() {
         throw new Error("Invalid credentials");
       }
 
-      const data = (await response.json()) as { admin: Admin };
-      return data.admin;
+      const data = (await response.json()) as { user: User };
+      return data.user;
     },
-    onSuccess: async (admin) => {
-      await setCookie("admin", JSON.stringify(admin), {
+    onSuccess: async (user) => {
+      await setCookie("user", JSON.stringify(user), {
         maxAge: 30 * 24 * 60 * 60,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",

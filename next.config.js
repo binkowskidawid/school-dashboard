@@ -10,7 +10,7 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: true,
-  trailingSlash: true,
+  trailingSlash: false,
   output: "standalone",
 
   eslint: {

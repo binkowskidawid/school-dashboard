@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'TEACHER', 'PARENT', 'STUDENT');
+
+-- CreateEnum
 CREATE TYPE "UserSex" AS ENUM ('MALE', 'FEMALE');
 
 -- CreateEnum
@@ -8,8 +11,9 @@ CREATE TYPE "Day" AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY
 CREATE TABLE "Admin" (
     "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
-    "password" TEXT NOT NULL,
+    "password" TEXT,
     "name" TEXT NOT NULL,
+    "role" "UserRole" NOT NULL DEFAULT 'ADMIN',
 
     CONSTRAINT "Admin_pkey" PRIMARY KEY ("id")
 );
@@ -31,6 +35,8 @@ CREATE TABLE "Student" (
     "classId" INTEGER NOT NULL,
     "gradeId" INTEGER NOT NULL,
     "birthday" TIMESTAMP(3) NOT NULL,
+    "role" "UserRole" NOT NULL DEFAULT 'STUDENT',
+    "password" TEXT,
 
     CONSTRAINT "Student_pkey" PRIMARY KEY ("id")
 );
@@ -49,6 +55,8 @@ CREATE TABLE "Teacher" (
     "sex" "UserSex" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "birthday" TIMESTAMP(3) NOT NULL,
+    "role" "UserRole" NOT NULL DEFAULT 'TEACHER',
+    "password" TEXT,
 
     CONSTRAINT "Teacher_pkey" PRIMARY KEY ("id")
 );
@@ -63,6 +71,8 @@ CREATE TABLE "Parent" (
     "phone" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "role" "UserRole" NOT NULL DEFAULT 'PARENT',
+    "password" TEXT,
 
     CONSTRAINT "Parent_pkey" PRIMARY KEY ("id")
 );
