@@ -1,108 +1,112 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
 import errorMessage from "~/utils/errorMessage";
-
-type ReqBodyProps = {
-  username?: string;
-  password?: string;
-};
+import { verifyPassword } from "~/utils/auth/password";
+import { getUserProfile } from "~/utils/auth/getUserProfile";
+import { generateAccessToken, generateRefreshToken } from "~/utils/auth/jwt";
+import {type LoginCredentials} from "~/types/user";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as ReqBodyProps;
-    const xForwardFor = request.headers.get("x-forwarded-for");
+    const body = (await request.json()) as LoginCredentials;
     const userAgent = request.headers.get("user-agent");
 
     const { username, password } = body;
 
-    console.log({
-      message: "POST /api/login",
-      method: request.method,
-      path: request.url,
-      body: body,
-      xForwardFor,
-      userAgent,
-    });
-
     if (!username || !password) {
-      console.error({
-        message: "POST /api/login",
-        method: request.method,
-        path: request.url,
-        error: "Auth data are required",
-      });
-
       return NextResponse.json(
         { error: "Username and password are required" },
         { status: 400 },
       );
     }
 
-    // Check each user type in sequence to find matching credentials
-    // First, check Admin
-    const admin = await db.admin.findUnique({
+    const userAuth = await db.userAuth.findUnique({
       where: { username },
+      include: {
+        adminProfile: true,
+        teacherProfile: true,
+        studentProfile: true,
+        parentProfile: true,
+      },
     });
 
-    if (admin?.password === password) {
-      const userData = {
-        ...admin,
-        password: null,
-      };
-      return NextResponse.json({ user: userData });
+    if (!userAuth) {
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 },
+      );
     }
 
-    // Check Teacher
-    const teacher = await db.teacher.findUnique({
-      where: { username },
+    const isValid = await verifyPassword(password, userAuth.password);
+
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 },
+      );
+    }
+
+    const profile = getUserProfile(userAuth);
+
+    // Create the user object without sensitive data
+    const userForResponse = {
+      id: userAuth.id,
+      username: userAuth.username,
+      role: userAuth.role,
+      ...profile,
+    };
+
+    // Generate tokens
+    const accessToken = generateAccessToken({
+      userId: userAuth.id,
+      username: userAuth.username,
+      role: userAuth.role,
     });
 
-    if (teacher?.password === password) {
-      const userData = {
-        ...teacher,
-        password: null,
-      };
-      return NextResponse.json({ user: userData });
-    }
-
-    // Check Student
-    const student = await db.student.findUnique({
-      where: { username },
+    const refreshToken = generateRefreshToken({
+      userId: userAuth.id,
+      username: userAuth.username,
+      role: userAuth.role,
     });
 
-    if (student?.password === password) {
-      const userData = {
-        ...student,
-        password: null,
-      };
-      return NextResponse.json({ user: userData });
-    }
-
-    // Check Parent
-    const parent = await db.parent.findUnique({
-      where: { username },
+    // Store refresh token
+    await db.session.create({
+      data: {
+        refreshToken,
+        userAuthId: userAuth.id,
+        deviceInfo: userAgent,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      },
     });
 
-    if (parent?.password === password) {
-      const userData = {
-        ...parent,
-        password: null,
-      };
-      return NextResponse.json({ user: userData });
-    }
-
-    // If no matching user is found, return an error
-    return NextResponse.json(
-      { error: "Invalid username or password" },
-      { status: 401 },
+    const response = NextResponse.json(
+      {
+        user: userForResponse,
+        expiresIn: 15 * 60, // 15 minutes in seconds
+      },
+      { status: 200 },
     );
-  } catch (error) {
-    console.error({
-      message: "Error in api/user/login",
-      error: errorMessage(error),
+
+    // Set cookies
+    response.cookies.set("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 60, // 15 minutes
     });
+
+    response.cookies.set("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Login error:", error);
     return NextResponse.json(
-      { success: false, error: errorMessage(error) },
+      { error: errorMessage(error) },
       { status: 500 },
     );
   }

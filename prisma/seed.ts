@@ -1,24 +1,37 @@
 import { Day, PrismaClient, UserSex } from "@prisma/client";
+import { hashPassword } from "~/utils/auth/password";
 
 const prisma = new PrismaClient();
 
 async function main() {
+
   // ADMIN
-  await prisma.admin.create({
+  await prisma.userAuth.create({
     data: {
-      id: "admin1",
       username: "admin1",
-      password: "admin1",
-      name: "Admin First",
-    },
+      password: await hashPassword("admin1"),
+      role: "ADMIN",
+      adminProfile: {
+        create: {
+          id: "admin1",
+          name: "Admin First",
+        }
+      }
+    }
   });
-  await prisma.admin.create({
+
+  await prisma.userAuth.create({
     data: {
-      id: "admin2",
       username: "admin2",
-      password: "admin2",
-      name: "Admin Second",
-    },
+      password: await hashPassword("admin2"),
+      role: "ADMIN",
+      adminProfile: {
+        create: {
+          id: "admin2",
+          name: "Admin Second",
+        }
+      }
+    }
   });
 
   // GRADE
@@ -61,24 +74,27 @@ async function main() {
 
   // TEACHER
   for (let i = 1; i <= 15; i++) {
-    await prisma.teacher.create({
+    await prisma.userAuth.create({
       data: {
-        id: `teacher${i}`, // Unique ID for the teacher
         username: `teacher${i}`,
-        name: `TName${i}`,
-        surname: `TSurname${i}`,
-        email: `teacher${i}@example.com`,
-        phone: `123-456-789${i}`,
-        address: `Address${i}`,
-        bloodType: "A+",
-        sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
-        subjects: { connect: [{ id: (i % 10) + 1 }] },
-        classes: { connect: [{ id: (i % 6) + 1 }] },
-        birthday: new Date(
-          new Date().setFullYear(new Date().getFullYear() - 30),
-        ),
-        password: `teacher${i}`,
-      },
+        password: await hashPassword(`teacher${i}`),
+        role: "TEACHER",
+        teacherProfile: {
+          create: {
+            id: `teacher${i}`,
+            name: `TName${i}`,
+            surname: `TSurname${i}`,
+            email: `teacher${i}@example.com`,
+            phone: `123-456-789${i}`,
+            address: `Address${i}`,
+            bloodType: "A+",
+            sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
+            subjects: { connect: [{ id: (i % 10) + 1 }] },
+            classes: { connect: [{ id: (i % 6) + 1 }] },
+            birthday: new Date(new Date().setFullYear(new Date().getFullYear() - 30)),
+          }
+        }
+      }
     });
   }
 
@@ -103,41 +119,51 @@ async function main() {
 
   // PARENT
   for (let i = 1; i <= 25; i++) {
-    await prisma.parent.create({
+    await prisma.userAuth.create({
       data: {
-        id: `parentId${i}`,
-        username: `parentId${i}`,
-        name: `PName ${i}`,
-        surname: `PSurname ${i}`,
-        email: `parent${i}@example.com`,
-        phone: `123-456-789${i}`,
-        address: `Address${i}`,
-        password: `parent${i}`,
-      },
+        username: `parent${i}`,
+        password: await hashPassword(`parent${i}`),
+        role: "PARENT",
+        parentProfile: {
+          create: {
+            id: `parent${i}`,
+            name: `PName ${i}`,
+            surname: `PSurname ${i}`,
+            email: `parent${i}@example.com`,
+            phone: `123-456-789${i}`,
+            address: `Address${i}`,
+          }
+        }
+      }
     });
   }
 
   // STUDENT
   for (let i = 1; i <= 50; i++) {
-    await prisma.student.create({
+    await prisma.userAuth.create({
       data: {
-        id: `student${i}`,
         username: `student${i}`,
-        name: `SName${i}`,
-        surname: `SSurname ${i}`,
-        email: `student${i}@example.com`,
-        phone: `987-654-321${i}`,
-        address: `Address${i}`,
-        bloodType: "O-",
-        sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
-        parentId: `parentId${Math.ceil(i / 2) % 25 || 25}`,
-        gradeId: (i % 6) + 1,
-        classId: (i % 6) + 1,
-        birthday: new Date(
-          new Date().setFullYear(new Date().getFullYear() - 10),
-        ),
-        password: `student${i}`,
-      },
+        password: await hashPassword(`student${i}`),
+        role: "STUDENT",
+        studentProfile: {
+          create: {
+            id: `student${i}`,
+            name: `SName${i}`,
+            surname: `SSurname ${i}`,
+            email: `student${i}@example.com`,
+            phone: `987-654-321${i}`,
+            address: `Address${i}`,
+            bloodType: "O-",
+            sex: i % 2 === 0 ? UserSex.MALE : UserSex.FEMALE,
+            parentId: `parent${Math.ceil(i / 2) % 25 || 25}`,
+            gradeId: (i % 6) + 1,
+            classId: (i % 6) + 1,
+            birthday: new Date(
+              new Date().setFullYear(new Date().getFullYear() - 10),
+            ),
+          }
+        }
+      }
     });
   }
 

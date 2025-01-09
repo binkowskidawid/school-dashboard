@@ -3,21 +3,12 @@ import Navbar from "~/components/dashboard-layout/Navbar";
 import Image from "next/image";
 import Link from "next/link";
 import { type ReactNode } from "react";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const userCookie = cookieStore.get("user");
-
-  if (!userCookie) {
-    redirect("/sign-in");
-  }
-
   return (
     <div className="flex h-screen">
       {/* LEFT */}

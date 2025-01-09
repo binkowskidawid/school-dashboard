@@ -42,12 +42,16 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
   });
 
   useEffect(() => {
-    if (user && status === "authenticated") {
-      // REDIRECT BASED ON USER ROLE
-      const dashboardPath = "/dashboard";
+    // IF USER IS ALREADY AUTHENTICATED, LET THE MIDDLEWARE HANDLE THE REDIRECT
+    if (status === "authenticated" && user?.role) {
+      const dashboardPath = `/${user.role.toLowerCase()}`;
+      console.log(
+        "SignIn page: Detected authenticated user, navigating to",
+        dashboardPath,
+      );
       router.push(dashboardPath);
     }
-  }, [user, status, router]);
+  }, [status, user, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     await signIn(values);

@@ -1,17 +1,21 @@
 "use client";
 
-import type { PropsWithChildren } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
-import { deleteCookie, getCookie } from "cookies-next";
+import {
+  createContext,
+  type PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+} from "react";
 import { useToast } from "~/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { type LoginCredentials, type User } from "~/types/user";
-import { useLogin } from "~/hooks/useLogin";
+import { useAuthentication } from "~/hooks/useAuthentication";
 
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 type AuthContextProps = {
-  user: User | null;
+  user: User | undefined;
   signIn: (credentials: LoginCredentials) => Promise<void>;
   signOut: () => Promise<void>;
   status: AuthStatus;
@@ -19,7 +23,7 @@ type AuthContextProps = {
 };
 
 const AuthContext = createContext<AuthContextProps>({
-  user: null,
+  user: undefined,
   signIn: () => Promise.resolve(),
   signOut: () => Promise.resolve(),
   status: "loading",
@@ -27,84 +31,84 @@ const AuthContext = createContext<AuthContextProps>({
 });
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<User | null>(null);
-  const [status, setStatus] = useState<AuthStatus>("loading");
+  const {
+    user,
+    status: queryStatus,
+    login,
+    logout,
+    isAuthenticated,
+  } = useAuthentication();
 
   const { toast } = useToast();
-  const { mutate: login, isPending } = useLogin();
   const router = useRouter();
 
-  const getRoleBasedRoute = (userRole: string) => {
-    const role = userRole.toLowerCase();
-    return `/${role}`;
-  };
+  const redirectToDashboard = useCallback(
+    (role: string) => {
+      const dashboardPath = `/${role.toLowerCase()}`;
+      console.log("Redirecting to:", dashboardPath);
+      router.replace(dashboardPath);
+    },
+    [router],
+  );
 
+  // Enhanced authentication effect
   useEffect(() => {
-    if (status !== "loading") return;
-    try {
-      const storedUser = getCookie("user");
-      if (storedUser) {
-        const userData = JSON.parse(storedUser as string) as User;
-        setUser(userData);
-        setStatus("authenticated");
-        // Redirect to role-specific route if needed
-        const currentPath = window.location.pathname;
-        const expectedPath = getRoleBasedRoute(userData.role);
-        if (currentPath === "/" || !currentPath.startsWith(expectedPath)) {
-          router.push(expectedPath);
-        }
-      } else {
-        setStatus("unauthenticated");
+    if (queryStatus === "pending") return;
+
+    const currentPath = window.location.pathname;
+
+    if (isAuthenticated && user?.role) {
+      if (currentPath === "/sign-in" || currentPath === "/") {
+        redirectToDashboard(user.role);
       }
-    } catch (error) {
-      console.error("Error reading cookie:", error);
-      setStatus("unauthenticated");
+    } else if (!isAuthenticated && currentPath !== "/sign-in") {
+      router.replace("/sign-in");
     }
-  }, [router]);
+  }, [isAuthenticated, user, queryStatus, redirectToDashboard, router]);
 
   const signIn = async (credentials: LoginCredentials) => {
-    if (!credentials.username || !credentials.password) {
-      toast({
-        title: "Invalid credentials",
-        description: "Please enter all required fields.",
-      });
-      return;
-    }
+    try {
+      const userData = await login.mutateAsync(credentials);
 
-    login(credentials, {
-      onSuccess: (userData) => {
-        setUser(userData);
-        setStatus("authenticated");
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in 🎉.",
-        });
-        // Redirect to the correct role-based route
-        const roleRoute = getRoleBasedRoute(userData.role);
-        router.push(roleRoute);
-      },
-      onError: (error) => {
-        toast({
-          title: "Sign in failed",
-          description: error.message,
-        });
-      },
-    });
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully signed in 🎉",
+      });
+
+      if (userData.role) {
+        redirectToDashboard(userData.role);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Sign in failed",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    }
   };
 
   const signOut = async () => {
     try {
-      await deleteCookie("user");
-      setUser(null);
-      setStatus("unauthenticated");
+      await logout.mutateAsync();
       router.push("/sign-in");
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("Logout error:", error);
+      router.push("/sign-in");
     }
   };
 
+  const status: AuthStatus =
+    queryStatus === "pending"
+      ? "loading"
+      : isAuthenticated
+        ? "authenticated"
+        : "unauthenticated";
+
   return (
-    <AuthContext.Provider value={{ user, signIn, signOut, status, isPending }}>
+    <AuthContext.Provider
+      value={{ user, signIn, signOut, status, isPending: login.isPending }}
+    >
       {children}
     </AuthContext.Provider>
   );

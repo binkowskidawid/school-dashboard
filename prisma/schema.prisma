@@ -7,17 +7,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model UserAuth {
+  id       String    @id @default(cuid())
+  username String    @unique
+  password String
+  role     UserRole
+  sessions Session[]
+
+  adminProfile   Admin?
+  teacherProfile Teacher?
+  parentProfile  Parent?
+  studentProfile Student?
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  refreshToken String   @unique
+  userAuthId   String
+  userAuth     UserAuth @relation(fields: [userAuthId], references: [id])
+  deviceInfo   String?
+  lastUsed     DateTime @default(now())
+  expiresAt    DateTime
+  isValid      Boolean  @default(true)
+}
+
 model Admin {
-  id       String   @id
-  username String   @unique
-  password String?
-  name     String
-  role     UserRole @default(ADMIN)
+  id         String    @id
+  name       String
+  role       UserRole  @default(ADMIN)
+  userAuthId String?   @unique
+  userAuth   UserAuth? @relation(fields: [userAuthId], references: [id])
 }
 
 model Student {
   id          String       @id
-  username    String       @unique
   name        String
   surname     String
   email       String?      @unique
@@ -37,41 +60,47 @@ model Student {
   results     Result[]
   birthday    DateTime
   role        UserRole     @default(STUDENT)
-  password    String?
+  userAuthId  String?      @unique
+  userAuth    UserAuth?    @relation(fields: [userAuthId], references: [id])
+
+  @@index([classId, gradeId])
+  @@index([parentId])
 }
 
 model Teacher {
-  id        String    @id
-  username  String    @unique
-  name      String
-  surname   String
-  email     String?   @unique
-  phone     String?   @unique
-  address   String
-  img       String?
-  bloodType String
-  sex       UserSex
-  createdAt DateTime  @default(now())
-  subjects  Subject[]
-  lessons   Lesson[]
-  classes   Class[]
-  birthday  DateTime
-  role      UserRole  @default(TEACHER)
-  password  String?
+  id         String    @id
+  name       String
+  surname    String
+  email      String?   @unique
+  phone      String?   @unique
+  address    String
+  img        String?
+  bloodType  String
+  sex        UserSex
+  createdAt  DateTime  @default(now())
+  subjects   Subject[]
+  lessons    Lesson[]
+  classes    Class[]
+  birthday   DateTime
+  role       UserRole  @default(TEACHER)
+  userAuthId String?   @unique
+  userAuth   UserAuth? @relation(fields: [userAuthId], references: [id])
+
+  @@index([surname, name])
 }
 
 model Parent {
-  id        String    @id
-  username  String    @unique
-  name      String
-  surname   String
-  email     String?   @unique
-  phone     String    @unique
-  address   String
-  createdAt DateTime  @default(now())
-  students  Student[]
-  role      UserRole  @default(PARENT)
-  password  String?
+  id         String    @id
+  name       String
+  surname    String
+  email      String?   @unique
+  phone      String    @unique
+  address    String
+  createdAt  DateTime  @default(now())
+  students   Student[]
+  role       UserRole  @default(PARENT)
+  userAuthId String?   @unique
+  userAuth   UserAuth? @relation(fields: [userAuthId], references: [id])
 }
 
 model Grade {
@@ -95,6 +124,8 @@ model Class {
   grade         Grade          @relation(fields: [gradeId], references: [id])
   events        Event[]
   announcements Announcement[]
+
+  @@index([supervisorId])
 }
 
 model Subject {
@@ -102,6 +133,8 @@ model Subject {
   name     String    @unique
   teachers Teacher[]
   lessons  Lesson[]
+
+  @@index([name])
 }
 
 model Lesson {
@@ -120,6 +153,10 @@ model Lesson {
   exams       Exam[]
   assignments Assignment[]
   attendances Attendance[]
+
+  @@index([day, startTime])
+  @@index([teacherId, day])
+  @@index([classId, day])
 }
 
 model Exam {
@@ -154,6 +191,9 @@ model Result {
   assignment   Assignment? @relation(fields: [assignmentId], references: [id])
   studentId    String
   student      Student     @relation(fields: [studentId], references: [id])
+
+  @@index([studentId, examId])
+  @@index([studentId, assignmentId])
 }
 
 model Attendance {
@@ -165,6 +205,10 @@ model Attendance {
   student   Student @relation(fields: [studentId], references: [id])
   lessonId  Int
   lesson    Lesson  @relation(fields: [lessonId], references: [id])
+
+  @@index([date])
+  @@index([studentId, date])
+  @@index([lessonId, date])
 }
 
 model Event {
@@ -176,6 +220,9 @@ model Event {
 
   classId Int?
   class   Class? @relation(fields: [classId], references: [id])
+
+  @@index([startTime])
+  @@index([classId, startTime])
 }
 
 model Announcement {
@@ -186,6 +233,9 @@ model Announcement {
 
   classId Int?
   class   Class? @relation(fields: [classId], references: [id])
+
+  @@index([date])
+  @@index([classId, date])
 }
 
 enum UserRole {

@@ -8,12 +8,34 @@ CREATE TYPE "UserSex" AS ENUM ('MALE', 'FEMALE');
 CREATE TYPE "Day" AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY');
 
 -- CreateTable
-CREATE TABLE "Admin" (
+CREATE TABLE "UserAuth" (
     "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
-    "password" TEXT,
+    "password" TEXT NOT NULL,
+    "role" "UserRole" NOT NULL,
+
+    CONSTRAINT "UserAuth_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Session" (
+    "id" TEXT NOT NULL,
+    "refreshToken" TEXT NOT NULL,
+    "userAuthId" TEXT NOT NULL,
+    "deviceInfo" TEXT,
+    "lastUsed" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "isValid" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Admin" (
+    "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "role" "UserRole" NOT NULL DEFAULT 'ADMIN',
+    "userAuthId" TEXT,
 
     CONSTRAINT "Admin_pkey" PRIMARY KEY ("id")
 );
@@ -21,7 +43,6 @@ CREATE TABLE "Admin" (
 -- CreateTable
 CREATE TABLE "Student" (
     "id" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "surname" TEXT NOT NULL,
     "email" TEXT,
@@ -36,7 +57,7 @@ CREATE TABLE "Student" (
     "gradeId" INTEGER NOT NULL,
     "birthday" TIMESTAMP(3) NOT NULL,
     "role" "UserRole" NOT NULL DEFAULT 'STUDENT',
-    "password" TEXT,
+    "userAuthId" TEXT,
 
     CONSTRAINT "Student_pkey" PRIMARY KEY ("id")
 );
@@ -44,7 +65,6 @@ CREATE TABLE "Student" (
 -- CreateTable
 CREATE TABLE "Teacher" (
     "id" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "surname" TEXT NOT NULL,
     "email" TEXT,
@@ -56,7 +76,7 @@ CREATE TABLE "Teacher" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "birthday" TIMESTAMP(3) NOT NULL,
     "role" "UserRole" NOT NULL DEFAULT 'TEACHER',
-    "password" TEXT,
+    "userAuthId" TEXT,
 
     CONSTRAINT "Teacher_pkey" PRIMARY KEY ("id")
 );
@@ -64,7 +84,6 @@ CREATE TABLE "Teacher" (
 -- CreateTable
 CREATE TABLE "Parent" (
     "id" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "surname" TEXT NOT NULL,
     "email" TEXT,
@@ -72,7 +91,7 @@ CREATE TABLE "Parent" (
     "address" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "role" "UserRole" NOT NULL DEFAULT 'PARENT',
-    "password" TEXT,
+    "userAuthId" TEXT,
 
     CONSTRAINT "Parent_pkey" PRIMARY KEY ("id")
 );
@@ -194,10 +213,13 @@ CREATE TABLE "_SubjectToTeacher" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Admin_username_key" ON "Admin"("username");
+CREATE UNIQUE INDEX "UserAuth_username_key" ON "UserAuth"("username");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Student_username_key" ON "Student"("username");
+CREATE UNIQUE INDEX "Session_refreshToken_key" ON "Session"("refreshToken");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Admin_userAuthId_key" ON "Admin"("userAuthId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Student_email_key" ON "Student"("email");
@@ -206,7 +228,13 @@ CREATE UNIQUE INDEX "Student_email_key" ON "Student"("email");
 CREATE UNIQUE INDEX "Student_phone_key" ON "Student"("phone");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Teacher_username_key" ON "Teacher"("username");
+CREATE UNIQUE INDEX "Student_userAuthId_key" ON "Student"("userAuthId");
+
+-- CreateIndex
+CREATE INDEX "Student_classId_gradeId_idx" ON "Student"("classId", "gradeId");
+
+-- CreateIndex
+CREATE INDEX "Student_parentId_idx" ON "Student"("parentId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Teacher_email_key" ON "Teacher"("email");
@@ -215,7 +243,10 @@ CREATE UNIQUE INDEX "Teacher_email_key" ON "Teacher"("email");
 CREATE UNIQUE INDEX "Teacher_phone_key" ON "Teacher"("phone");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Parent_username_key" ON "Parent"("username");
+CREATE UNIQUE INDEX "Teacher_userAuthId_key" ON "Teacher"("userAuthId");
+
+-- CreateIndex
+CREATE INDEX "Teacher_surname_name_idx" ON "Teacher"("surname", "name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Parent_email_key" ON "Parent"("email");
@@ -224,16 +255,67 @@ CREATE UNIQUE INDEX "Parent_email_key" ON "Parent"("email");
 CREATE UNIQUE INDEX "Parent_phone_key" ON "Parent"("phone");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Parent_userAuthId_key" ON "Parent"("userAuthId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Grade_level_key" ON "Grade"("level");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Class_name_key" ON "Class"("name");
 
 -- CreateIndex
+CREATE INDEX "Class_supervisorId_idx" ON "Class"("supervisorId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Subject_name_key" ON "Subject"("name");
 
 -- CreateIndex
+CREATE INDEX "Subject_name_idx" ON "Subject"("name");
+
+-- CreateIndex
+CREATE INDEX "Lesson_day_startTime_idx" ON "Lesson"("day", "startTime");
+
+-- CreateIndex
+CREATE INDEX "Lesson_teacherId_day_idx" ON "Lesson"("teacherId", "day");
+
+-- CreateIndex
+CREATE INDEX "Lesson_classId_day_idx" ON "Lesson"("classId", "day");
+
+-- CreateIndex
+CREATE INDEX "Result_studentId_examId_idx" ON "Result"("studentId", "examId");
+
+-- CreateIndex
+CREATE INDEX "Result_studentId_assignmentId_idx" ON "Result"("studentId", "assignmentId");
+
+-- CreateIndex
+CREATE INDEX "Attendance_date_idx" ON "Attendance"("date");
+
+-- CreateIndex
+CREATE INDEX "Attendance_studentId_date_idx" ON "Attendance"("studentId", "date");
+
+-- CreateIndex
+CREATE INDEX "Attendance_lessonId_date_idx" ON "Attendance"("lessonId", "date");
+
+-- CreateIndex
+CREATE INDEX "Event_startTime_idx" ON "Event"("startTime");
+
+-- CreateIndex
+CREATE INDEX "Event_classId_startTime_idx" ON "Event"("classId", "startTime");
+
+-- CreateIndex
+CREATE INDEX "Announcement_date_idx" ON "Announcement"("date");
+
+-- CreateIndex
+CREATE INDEX "Announcement_classId_date_idx" ON "Announcement"("classId", "date");
+
+-- CreateIndex
 CREATE INDEX "_SubjectToTeacher_B_index" ON "_SubjectToTeacher"("B");
+
+-- AddForeignKey
+ALTER TABLE "Session" ADD CONSTRAINT "Session_userAuthId_fkey" FOREIGN KEY ("userAuthId") REFERENCES "UserAuth"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Admin" ADD CONSTRAINT "Admin_userAuthId_fkey" FOREIGN KEY ("userAuthId") REFERENCES "UserAuth"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Student" ADD CONSTRAINT "Student_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Parent"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -243,6 +325,15 @@ ALTER TABLE "Student" ADD CONSTRAINT "Student_classId_fkey" FOREIGN KEY ("classI
 
 -- AddForeignKey
 ALTER TABLE "Student" ADD CONSTRAINT "Student_gradeId_fkey" FOREIGN KEY ("gradeId") REFERENCES "Grade"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Student" ADD CONSTRAINT "Student_userAuthId_fkey" FOREIGN KEY ("userAuthId") REFERENCES "UserAuth"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Teacher" ADD CONSTRAINT "Teacher_userAuthId_fkey" FOREIGN KEY ("userAuthId") REFERENCES "UserAuth"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Parent" ADD CONSTRAINT "Parent_userAuthId_fkey" FOREIGN KEY ("userAuthId") REFERENCES "UserAuth"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Class" ADD CONSTRAINT "Class_supervisorId_fkey" FOREIGN KEY ("supervisorId") REFERENCES "Teacher"("id") ON DELETE SET NULL ON UPDATE CASCADE;
