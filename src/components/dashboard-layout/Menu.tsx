@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useAuth } from "~/context/auth/AuthContext";
+import { useAuthContext } from "~/context/auth/AuthContext";
 
 const menuItems = [
   {
@@ -120,7 +120,7 @@ const menuItems = [
 ];
 
 const Menu = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const role = user?.role;
 
   return (

@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useAuth } from "~/context/auth/AuthContext";
+import { useAuthContext } from "~/context/auth/AuthContext";
 
 const Navbar = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
   return (
     <div className="flex items-center justify-between p-4">

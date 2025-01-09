@@ -1,9 +1,9 @@
 "use client";
 
-import { useAuth } from "~/context/auth/AuthContext";
+import { useAuthContext } from "~/context/auth/AuthContext";
 
 const StudentPage = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
 
   return (
     <div className="container mx-auto p-6">

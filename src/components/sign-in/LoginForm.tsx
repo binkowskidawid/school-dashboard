@@ -1,61 +1,56 @@
 "use client";
 
-import { cn } from "~/lib/utils";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { type ComponentProps, useEffect } from "react";
-import { useToast } from "~/hooks/use-toast";
-import { z } from "zod";
-import { useAuth } from "~/context/auth/AuthContext";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "~/components/ui/form";
+import {cn} from "~/lib/utils";
+import {Button} from "~/components/ui/button";
+import {Card, CardContent} from "~/components/ui/card";
+import {Input} from "~/components/ui/input";
+import {type ComponentProps} from "react";
+import {useToast} from "~/hooks/use-toast";
+import {z} from "zod";
+import {useAuthContext} from "~/context/auth/AuthContext";
+import {useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage,} from "~/components/ui/form";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader } from "lucide-react";
-import { useRouter } from "next/navigation";
+import {Loader} from "lucide-react";
 
-const formSchema = z.object({
+/**
+ * Form validation schema
+ */
+const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
 });
 
+type LoginFormData = z.infer<typeof loginSchema>;
+
 export function LoginForm({ className, ...props }: ComponentProps<"div">) {
   const { toast } = useToast();
-  const { signIn, isPending, user, status } = useAuth();
-  const router = useRouter();
+  const { signIn, isLoading } = useAuthContext();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
       password: "",
     },
   });
 
-  useEffect(() => {
-    // IF USER IS ALREADY AUTHENTICATED, LET THE MIDDLEWARE HANDLE THE REDIRECT
-    if (status === "authenticated" && user?.role) {
-      const dashboardPath = `/${user.role.toLowerCase()}`;
-      console.log(
-        "SignIn page: Detected authenticated user, navigating to",
-        dashboardPath,
-      );
-      router.push(dashboardPath);
+  /**
+   * Handle form submission
+   */
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      await signIn(data);
+    } catch (error) {
+      // Error is already handled in AuthContext
+      form.setError("root", {
+        type: "manual",
+        message: "Invalid credentials",
+      });
     }
-  }, [status, user, router]);
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    await signIn(values);
-  }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -126,14 +121,14 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
                   type="submit"
                   aria-label={"Submit button"}
                   className="flex w-full items-center justify-center gap-2"
-                  disabled={isPending}
+                  disabled={isLoading}
                 >
                   <Loader
                     className={cn("mr-2 animate-spin", {
-                      hidden: !isPending,
+                      hidden: !isLoading,
                     })}
                   />
-                  {isPending ? "Logging in..." : "Login"}
+                  {isLoading ? "Logging in..." : "Login"}
                 </Button>
                 <div className="text-center text-sm">
                   Don&apos;t have an account?{" "}
