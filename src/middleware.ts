@@ -1,10 +1,25 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "./utils/auth/jwt";
+import {type NextRequest, NextResponse} from "next/server";
+import {verifyToken} from "./utils/auth/jwt";
+import type {User} from "~/types/user";
 
-// Configuration
+/**
+ * Configuration constants for route handling and authentication
+ * @constant
+ */
 const PUBLIC_PATHS = ["/sign-in", "/sign-in/"];
-const PUBLIC_FILES = ["/_next", "/api/", "/favicon.ico"];
+const ROOT_PATH = "/";
+const PUBLIC_FILES = [
+  "/_next",
+  "/api/",
+  "/favicon.ico",
+  "/images/",
+  "/public/",
+] as const;
 
+/**
+ * Mapping of user roles to their respective dashboard paths
+ * @constant
+ */
 const ROLE_PATHS = {
   ADMIN: "/admin",
   TEACHER: "/teacher",
@@ -13,71 +28,154 @@ const ROLE_PATHS = {
 } as const;
 
 /**
- * Middleware to handle authentication and authorization
+ * Authentication and routing middleware for the school dashboard.
+ * Handles user authentication, role-based access control, and routing logic.
+ * @async
+ * @param {NextRequest} request - The incoming request object
+ * @returns {Promise<NextResponse>} The response with appropriate routing/authentication
  */
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Skip middleware for public files
-  if (PUBLIC_FILES.some(path => pathname.startsWith(path))) {
-    return NextResponse.next();
-  }
-
-  // Get auth token from cookies
-  const authToken = request.cookies.get("authToken")?.value;
-
-  // Handle public routes
-  if (PUBLIC_PATHS.includes(pathname)) {
-    // If user is authenticated, redirect to their dashboard
-    if (authToken) {
-      try {
-        const payload = verifyToken(authToken);
-        const rolePath = ROLE_PATHS[payload.role.toUpperCase() as keyof typeof ROLE_PATHS];
-        return NextResponse.redirect(new URL(rolePath, request.url));
-      } catch {
-        // If token is invalid, clear it and continue to public route
-        const response = NextResponse.next();
-        response.cookies.delete("authToken");
-        return response;
-      }
-    }
-    return NextResponse.next();
-  }
-
-  // Handle protected routes
-  if (!authToken) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
-  }
-
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   try {
-    const payload = verifyToken(authToken);
-    const userRole = payload.role.toLowerCase();
-    const firstPathSegment = pathname.split("/")[1];
+    const { pathname } = request.nextUrl;
 
-    // Ensure user is accessing their correct role path
-    if (Object.values(ROLE_PATHS).some(path => path.includes(firstPathSegment ?? "")) &&
-      firstPathSegment !== userRole) {
+    // Skip middleware for public files and API routes
+    if (PUBLIC_FILES.some((path) => pathname.startsWith(path))) {
+      return NextResponse.next();
+    }
+
+    // Get authentication state from cookies with detailed logging
+    const authToken = request.cookies.get("authToken")?.value;
+    const userCookie = request.cookies.get("user")?.value;
+
+    console.log("Authentication state:", {
+      path: pathname,
+      hasAuthToken: !!authToken,
+      hasUserCookie: !!userCookie,
+      authTokenPreview: authToken ? `${authToken.substring(0, 20)}...` : null,
+      userCookiePreview: userCookie
+        ? `${userCookie.substring(0, 20)}...`
+        : null,
+    });
+
+    // Early return if we don't have both cookies
+    if (!authToken || !userCookie) {
+      console.log("Missing required cookies");
+      return handleUnauthenticated(request);
+    }
+
+    // Try to parse user cookie first
+    let user: User;
+    try {
+      user = JSON.parse(userCookie) as User;
+    } catch (error) {
+      console.error("Failed to parse user cookie:", error);
+      return clearAuthAndRedirect(request);
+    }
+
+    // Verify auth token
+    try {
+      const payload = await verifyToken(authToken);
+
+      // Log successful token verification
+      console.log("Token verification successful:", {
+        role: payload.role,
+        username: payload.username,
+      });
+
+      // Verify token matches user data with detailed logging
+      if (payload.role !== user.role || payload.userId !== user.id) {
+        console.error("Token/user mismatch:", {
+          token: {
+            role: payload.role,
+            userId: payload.userId,
+            fullToken: payload,
+          },
+          user: {
+            role: user.role,
+            id: user.id,
+            fullUser: user,
+          },
+        });
+        return clearAuthAndRedirect(request);
+      }
+    } catch (error) {
+      console.error("Token verification failed:", {
+        error,
+        token: authToken.substring(0, 20) + "...",
+      });
+      return clearAuthAndRedirect(request);
+    }
+
+    // Handle various routing scenarios based on authentication state
+    const isPublicRoute = PUBLIC_PATHS.includes(pathname);
+    const isRootPath = pathname === ROOT_PATH;
+    const userRole = user.role.toLowerCase();
+
+    if (isRootPath || isPublicRoute) {
+      const rolePath =
+        ROLE_PATHS[user.role.toUpperCase() as keyof typeof ROLE_PATHS];
+      return NextResponse.redirect(new URL(rolePath, request.url));
+    }
+
+    // Enforce role-based path restrictions
+    const firstPathSegment = pathname.split("/")[1];
+    if (
+      firstPathSegment &&
+      Object.values(ROLE_PATHS).some((path) =>
+        path.includes(firstPathSegment),
+      ) &&
+      firstPathSegment !== userRole
+    ) {
       return NextResponse.redirect(new URL(`/${userRole}`, request.url));
     }
 
-    // Add user info to headers for backend use
+    // Add user context to request headers
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("X-User-Id", payload.userId);
-    requestHeaders.set("X-User-Role", payload.role);
+    requestHeaders.set("X-User-Id", user.id);
+    requestHeaders.set("X-User-Role", user.role);
 
     return NextResponse.next({
       request: {
         headers: requestHeaders,
       },
     });
-  } catch {
-    // Invalid token - redirect to login
-    const response = NextResponse.redirect(new URL("/sign-in", request.url));
-    response.cookies.delete("authToken");
-    return response;
+  } catch (error) {
+    console.error("Unexpected middleware error:", error);
+    return clearAuthAndRedirect(request);
   }
 }
 
+/**
+ * Handles requests from unauthenticated users, redirecting to sign-in
+ * @param {NextRequest} request - The incoming request
+ * @returns {NextResponse} Redirect to sign-in or allow if already on sign-in
+ */
+function handleUnauthenticated(request: NextRequest) {
+  if (request.nextUrl.pathname === "/sign-in") {
+    return NextResponse.next();
+  }
+  return NextResponse.redirect(new URL("/sign-in", request.url));
+}
+
+/**
+ * Clears authentication cookies and redirects to sign-in page
+ * @param {NextRequest} request - The incoming request
+ * @returns {NextResponse} Response with cleared cookies and redirect
+ */
+function clearAuthAndRedirect(request: NextRequest) {
+  const response = NextResponse.redirect(new URL("/sign-in", request.url));
+  response.cookies.delete("authToken");
+  response.cookies.delete("user");
+  return response;
+}
+
+/**
+ * Middleware configuration specifying which routes to handle
+ * Excludes static files and includes auth endpoints
+ */
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|images/|favicon.ico|public/).*)",
+    "/api/auth/me",
+  ],
 };

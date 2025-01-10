@@ -147,7 +147,7 @@ export function LoginForm({ className, ...props }: ComponentProps<"div">) {
           <div className="relative hidden h-full w-full bg-muted md:block">
             <div className="relative m-auto h-[90%] w-[90%]">
               <Image
-                src="/images/school.png"
+                src={"/images/school.png"}
                 alt="School building cartoon"
                 aria-label={"School building cartoon"}
                 className="object-contain dark:brightness-[0.2] dark:grayscale"

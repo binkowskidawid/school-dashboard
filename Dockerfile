@@ -2,6 +2,8 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
+ENV SKIP_ENV_VALIDATION=true
+
 # Enable pnpm
 RUN corepack enable
 

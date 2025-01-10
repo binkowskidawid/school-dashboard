@@ -1,34 +1,64 @@
-import jwt from "jsonwebtoken";
-import { env } from "~/env";
+import * as jose from "jose";
+import {env} from "~/env";
 
-// TYPE FOR THE DATA WE STORE IN THE JWT
-export interface TokenPayload {
+/**
+ * Represents the required structure for JWT token payloads, extending jose's base payload
+ * with our application-specific fields for user authentication.
+ * @interface TokenPayload
+ * @extends {jose.JWTPayload}
+ */
+interface TokenPayload extends jose.JWTPayload {
   userId: string;
   username: string;
   role: string;
 }
 
+// Initialize encoder and secret key for JWT operations
+const textEncoder = new TextEncoder();
+const secretKey = textEncoder.encode(env.JWT_ACCESS_SECRET);
+
 /**
- * Generates a JWT token containing user information
- * @param payload User information to encode in the token
- * @returns JWT token string
+ * Creates a JWT token for user authentication that expires in 24 hours.
+ * @async
+ * @param {TokenPayload} payload - The user data to encode in the token
+ * @returns {Promise<string>} The signed JWT token
+ * @throws {Error} If token signing fails
  */
-export function generateToken(payload: TokenPayload): string {
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET, {
-    expiresIn: "24h", // SINGLE TOKEN THAT LASTS 24 HOURS
-  });
+export async function generateToken(payload: TokenPayload): Promise<string> {
+  return await new jose.SignJWT({
+    userId: payload.userId,
+    username: payload.username,
+    role: payload.role,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setExpirationTime("24h")
+    .sign(secretKey);
 }
 
 /**
- * Verifies and decodes a JWT token
- * @param token JWT token to verify
- * @returns Decoded token payload
- * @throws Error if token is invalid
+ * Verifies and decodes a JWT token, ensuring all required user fields are present.
+ * @async
+ * @param {string} token - The JWT token to verify
+ * @returns {Promise<TokenPayload>} The decoded token payload
+ * @throws {Error} If token is invalid or missing required fields
  */
-export function verifyToken(token: string): TokenPayload {
+export async function verifyToken(token: string): Promise<TokenPayload> {
   try {
-    return jwt.verify(token, env.JWT_ACCESS_SECRET) as TokenPayload;
+    const { payload } = await jose.jwtVerify(token, secretKey);
+
+    // TYPE CHECKING TO ENSURE WE HAVE ALL REQUIRED FIELDS
+    if (!payload.userId || !payload.username || !payload.role) {
+      throw new Error("Missing required payload fields");
+    }
+
+    return {
+      userId: payload.userId as string,
+      username: payload.username as string,
+      role: payload.role as string,
+      ...payload,
+    };
   } catch (error) {
+    console.error("Token verification failed:", error);
     throw new Error("Invalid token");
   }
 }

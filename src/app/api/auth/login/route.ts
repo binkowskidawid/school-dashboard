@@ -10,15 +10,15 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as LoginCredentials;
     const { username, password } = body;
 
-    // Input validation
+    // INPUT VALIDATION
     if (!username || !password) {
       return NextResponse.json(
         { error: "Username and password are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Find user and include their profile
+    // FIND USER AND INCLUDE THEIR PROFILE
     const userAuth = await db.userAuth.findUnique({
       where: { username },
       include: {
@@ -32,47 +32,57 @@ export async function POST(request: NextRequest) {
     if (!userAuth) {
       return NextResponse.json(
         { error: "Invalid credentials" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    // Verify password
+    // VERIFY PASSWORD
     const isValid = await verifyPassword(password, userAuth.password);
     if (!isValid) {
       return NextResponse.json(
         { error: "Invalid credentials" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    // Get user profile based on role
+    // GET USER PROFILE BASED ON ROLE
     const profile = getUserProfile(userAuth);
 
-    // Create user object (excluding sensitive data)
+    // CREATE USER OBJECT
     const user = {
       id: userAuth.id,
       username: userAuth.username,
       role: userAuth.role,
-      ...profile,
+      name: profile?.name,
     };
 
-    // Generate single JWT token
-    const token = generateToken({
+    // GENERATE SINGLE JWT TOKEN
+    const token = await generateToken({
       userId: userAuth.id,
       username: userAuth.username,
       role: userAuth.role,
     });
 
-    // Create response with user data
+    // CREATE RESPONSE WITH USER DATA
     const response = NextResponse.json({ user }, { status: 200 });
 
-    // Set secure HTTP-only cookie
+    // SET SECURE HTTP-ONLY COOKIE
     response.cookies.set("authToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60, // 24 hours
+      sameSite: "lax",
       path: "/",
+      maxAge: 24 * 60 * 60, // 24 HOURS
+      priority: "high",
+    });
+
+    // Also set a user cookie for client access
+    response.cookies.set("user", JSON.stringify(user), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 24 * 60 * 60, // 24 HOURS
     });
 
     return response;
@@ -80,7 +90,7 @@ export async function POST(request: NextRequest) {
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "Authentication failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

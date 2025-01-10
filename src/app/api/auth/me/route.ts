@@ -8,7 +8,7 @@ export async function GET() {
   try {
     // GET THE ACCESS TOKEN FROM COOKIES
     const cookieStore = await cookies();
-    const accessToken = cookieStore.get("accessToken")?.value;
+    const accessToken = cookieStore.get("authToken")?.value;
 
     if (!accessToken) {
       return NextResponse.json(
@@ -18,7 +18,7 @@ export async function GET() {
     }
 
     // VERIFY THE ACCESS TOKEN AND GET USER INFORMATION
-    const payload = verifyToken(accessToken);
+    const payload = await verifyToken(accessToken);
 
     // FETCH THE USER'S DATA FROM DATABASE
     const userAuth = await db.userAuth.findUnique({

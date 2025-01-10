@@ -3,15 +3,7 @@ import {
   type Parent,
   type Student,
   type Teacher,
-  type UserRole,
 } from "@prisma/client";
-
-export interface BaseUser {
-  id: string;
-  username: string;
-  name: string;
-  role: UserRole;
-}
 
 // UNION TYPE OF ALL POSSIBLE USER TYPES
 export type User = Admin | Teacher | Student | Parent;
