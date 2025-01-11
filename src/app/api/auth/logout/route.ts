@@ -1,11 +1,18 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { db } from "~/server/db";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    // CREATE RESPONSE THAT WILL CLEAR THE COOKIES
-    const response = NextResponse.json({ success: true });
+    const userId = request.headers.get("X-User-Id");
 
-    // CLEAR TOKENS FROM COOKIES
+    if (userId) {
+      await db.session.updateMany({
+        where: { userAuthId: userId },
+        data: { isValid: false },
+      });
+    }
+
+    const response = NextResponse.json({ success: true });
     response.cookies.delete("authToken");
     response.cookies.delete("user");
 

@@ -36,6 +36,23 @@ export async function generateToken(payload: TokenPayload): Promise<string> {
 }
 
 /**
+ * Generates a random refresh token using Web Crypto API.
+ * This implementation is compatible with both Edge and Node.js runtimes.
+ * @async
+ * @returns {Promise<string>} A cryptographically secure random token
+ */
+export async function generateRefreshToken(): Promise<string> {
+  // GENERATE 32 RANDOM BYTES (256 BITS)
+  const buffer = new Uint8Array(32);
+  crypto.getRandomValues(buffer);
+
+  // CONVERT TO HEXADECIMAL STRING
+  return Array.from(buffer)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
  * Verifies and decodes a JWT token, ensuring all required user fields are present.
  * @async
  * @param {string} token - The JWT token to verify

@@ -8,20 +8,27 @@ datasource db {
 }
 
 model UserAuth {
-  id       String    @id @default(cuid())
-  username String    @unique
-  password String
-  role     UserRole
-  sessions Session[]
+  id        String    @id @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  username  String    @unique
+  password  String
+  role      UserRole
+  sessions  Session[]
 
   adminProfile   Admin?
   teacherProfile Teacher?
   parentProfile  Parent?
   studentProfile Student?
+
+  @@index([createdAt])
+  @@index([role])
 }
 
 model Session {
   id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   refreshToken String   @unique
   userAuthId   String
   userAuth     UserAuth @relation(fields: [userAuthId], references: [id])
@@ -33,6 +40,8 @@ model Session {
 
 model Admin {
   id         String    @id
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   name       String
   role       UserRole  @default(ADMIN)
   userAuthId String?   @unique
@@ -41,6 +50,8 @@ model Admin {
 
 model Student {
   id          String       @id
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   name        String
   surname     String
   email       String?      @unique
@@ -49,7 +60,6 @@ model Student {
   img         String?
   bloodType   String
   sex         UserSex
-  createdAt   DateTime     @default(now())
   parentId    String
   parent      Parent       @relation(fields: [parentId], references: [id])
   classId     Int
@@ -69,6 +79,8 @@ model Student {
 
 model Teacher {
   id         String    @id
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   name       String
   surname    String
   email      String?   @unique
@@ -77,7 +89,6 @@ model Teacher {
   img        String?
   bloodType  String
   sex        UserSex
-  createdAt  DateTime  @default(now())
   subjects   Subject[]
   lessons    Lesson[]
   classes    Class[]
@@ -91,12 +102,13 @@ model Teacher {
 
 model Parent {
   id         String    @id
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   name       String
   surname    String
   email      String?   @unique
   phone      String    @unique
   address    String
-  createdAt  DateTime  @default(now())
   students   Student[]
   role       UserRole  @default(PARENT)
   userAuthId String?   @unique
@@ -104,17 +116,21 @@ model Parent {
 }
 
 model Grade {
-  id    Int @id @default(autoincrement())
-  level Int @unique
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  level     Int      @unique
 
   students Student[]
   classess Class[]
 }
 
 model Class {
-  id       Int    @id @default(autoincrement())
-  name     String @unique
-  capacity Int
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String   @unique
+  capacity  Int
 
   supervisorId  String?
   supervisor    Teacher?       @relation(fields: [supervisorId], references: [id])
@@ -129,16 +145,20 @@ model Class {
 }
 
 model Subject {
-  id       Int       @id @default(autoincrement())
-  name     String    @unique
-  teachers Teacher[]
-  lessons  Lesson[]
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  name      String    @unique
+  teachers  Teacher[]
+  lessons   Lesson[]
 
   @@index([name])
 }
 
 model Lesson {
   id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   name      String
   day       Day
   startTime DateTime
@@ -161,6 +181,8 @@ model Lesson {
 
 model Exam {
   id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   title     String
   startTime DateTime
   endTime   DateTime
@@ -172,6 +194,8 @@ model Exam {
 
 model Assignment {
   id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   title     String
   startDate DateTime
   dueDate   DateTime
@@ -182,8 +206,10 @@ model Assignment {
 }
 
 model Result {
-  id    Int @id @default(autoincrement())
-  score Int
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  score     Int
 
   examId       Int?
   exam         Exam?       @relation(fields: [examId], references: [id])
@@ -197,9 +223,11 @@ model Result {
 }
 
 model Attendance {
-  id      Int      @id @default(autoincrement())
-  date    DateTime
-  present Boolean
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  date      DateTime
+  present   Boolean
 
   studentId String
   student   Student @relation(fields: [studentId], references: [id])
@@ -213,6 +241,8 @@ model Attendance {
 
 model Event {
   id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   title       String
   description String
   startTime   DateTime
@@ -227,6 +257,8 @@ model Event {
 
 model Announcement {
   id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   title       String
   description String
   date        DateTime

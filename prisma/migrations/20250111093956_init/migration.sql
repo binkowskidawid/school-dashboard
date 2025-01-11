@@ -10,6 +10,8 @@ CREATE TYPE "Day" AS ENUM ('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY
 -- CreateTable
 CREATE TABLE "UserAuth" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "username" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "role" "UserRole" NOT NULL,
@@ -20,6 +22,8 @@ CREATE TABLE "UserAuth" (
 -- CreateTable
 CREATE TABLE "Session" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "refreshToken" TEXT NOT NULL,
     "userAuthId" TEXT NOT NULL,
     "deviceInfo" TEXT,
@@ -33,6 +37,8 @@ CREATE TABLE "Session" (
 -- CreateTable
 CREATE TABLE "Admin" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "role" "UserRole" NOT NULL DEFAULT 'ADMIN',
     "userAuthId" TEXT,
@@ -43,6 +49,8 @@ CREATE TABLE "Admin" (
 -- CreateTable
 CREATE TABLE "Student" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "surname" TEXT NOT NULL,
     "email" TEXT,
@@ -51,7 +59,6 @@ CREATE TABLE "Student" (
     "img" TEXT,
     "bloodType" TEXT NOT NULL,
     "sex" "UserSex" NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "parentId" TEXT NOT NULL,
     "classId" INTEGER NOT NULL,
     "gradeId" INTEGER NOT NULL,
@@ -65,6 +72,8 @@ CREATE TABLE "Student" (
 -- CreateTable
 CREATE TABLE "Teacher" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "surname" TEXT NOT NULL,
     "email" TEXT,
@@ -73,7 +82,6 @@ CREATE TABLE "Teacher" (
     "img" TEXT,
     "bloodType" TEXT NOT NULL,
     "sex" "UserSex" NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "birthday" TIMESTAMP(3) NOT NULL,
     "role" "UserRole" NOT NULL DEFAULT 'TEACHER',
     "userAuthId" TEXT,
@@ -84,12 +92,13 @@ CREATE TABLE "Teacher" (
 -- CreateTable
 CREATE TABLE "Parent" (
     "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "surname" TEXT NOT NULL,
     "email" TEXT,
     "phone" TEXT NOT NULL,
     "address" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "role" "UserRole" NOT NULL DEFAULT 'PARENT',
     "userAuthId" TEXT,
 
@@ -99,6 +108,8 @@ CREATE TABLE "Parent" (
 -- CreateTable
 CREATE TABLE "Grade" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "level" INTEGER NOT NULL,
 
     CONSTRAINT "Grade_pkey" PRIMARY KEY ("id")
@@ -107,6 +118,8 @@ CREATE TABLE "Grade" (
 -- CreateTable
 CREATE TABLE "Class" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "capacity" INTEGER NOT NULL,
     "supervisorId" TEXT,
@@ -118,6 +131,8 @@ CREATE TABLE "Class" (
 -- CreateTable
 CREATE TABLE "Subject" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
 
     CONSTRAINT "Subject_pkey" PRIMARY KEY ("id")
@@ -126,6 +141,8 @@ CREATE TABLE "Subject" (
 -- CreateTable
 CREATE TABLE "Lesson" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
     "day" "Day" NOT NULL,
     "startTime" TIMESTAMP(3) NOT NULL,
@@ -140,6 +157,8 @@ CREATE TABLE "Lesson" (
 -- CreateTable
 CREATE TABLE "Exam" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "title" TEXT NOT NULL,
     "startTime" TIMESTAMP(3) NOT NULL,
     "endTime" TIMESTAMP(3) NOT NULL,
@@ -151,6 +170,8 @@ CREATE TABLE "Exam" (
 -- CreateTable
 CREATE TABLE "Assignment" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "title" TEXT NOT NULL,
     "startDate" TIMESTAMP(3) NOT NULL,
     "dueDate" TIMESTAMP(3) NOT NULL,
@@ -162,6 +183,8 @@ CREATE TABLE "Assignment" (
 -- CreateTable
 CREATE TABLE "Result" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "score" INTEGER NOT NULL,
     "examId" INTEGER,
     "assignmentId" INTEGER,
@@ -173,6 +196,8 @@ CREATE TABLE "Result" (
 -- CreateTable
 CREATE TABLE "Attendance" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
     "present" BOOLEAN NOT NULL,
     "studentId" TEXT NOT NULL,
@@ -184,6 +209,8 @@ CREATE TABLE "Attendance" (
 -- CreateTable
 CREATE TABLE "Event" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "startTime" TIMESTAMP(3) NOT NULL,
@@ -196,6 +223,8 @@ CREATE TABLE "Event" (
 -- CreateTable
 CREATE TABLE "Announcement" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
@@ -214,6 +243,12 @@ CREATE TABLE "_SubjectToTeacher" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserAuth_username_key" ON "UserAuth"("username");
+
+-- CreateIndex
+CREATE INDEX "UserAuth_createdAt_idx" ON "UserAuth"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "UserAuth_role_idx" ON "UserAuth"("role");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Session_refreshToken_key" ON "Session"("refreshToken");

@@ -72,38 +72,39 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       return clearAuthAndRedirect(request);
     }
 
-    // Verify auth token
     try {
-      const payload = await verifyToken(authToken);
+      // Try to verify the current token
+      await verifyToken(authToken);
+    } catch (error) {
+      console.error("Token verification failed, attempting refresh");
 
-      // Log successful token verification
-      console.log("Token verification successful:", {
-        role: payload.role,
-        username: payload.username,
+      // Token is invalid, try to refresh it
+      const response = await fetch(new URL("/api/auth/refresh", request.url), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: user.id }),
       });
 
-      // Verify token matches user data with detailed logging
-      if (payload.role !== user.role || payload.userId !== user.id) {
-        console.error("Token/user mismatch:", {
-          token: {
-            role: payload.role,
-            userId: payload.userId,
-            fullToken: payload,
-          },
-          user: {
-            role: user.role,
-            id: user.id,
-            fullUser: user,
-          },
-        });
+      if (!response.ok) {
         return clearAuthAndRedirect(request);
       }
-    } catch (error) {
-      console.error("Token verification failed:", {
-        error,
-        token: authToken.substring(0, 20) + "...",
+
+      // Get the new token from response
+      const { token } = (await response.json()) as { token: string };
+      const newResponse = NextResponse.redirect(request.url);
+
+      // Set the new access token
+      newResponse.cookies.set("authToken", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 24 * 60 * 60,
       });
-      return clearAuthAndRedirect(request);
+
+      return newResponse;
     }
 
     // Handle various routing scenarios based on authentication state

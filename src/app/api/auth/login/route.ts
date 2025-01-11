@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { db } from "~/server/db";
 import { verifyPassword } from "~/utils/auth/password";
-import { generateToken } from "~/utils/auth/jwt";
+import { generateRefreshToken, generateToken } from "~/utils/auth/jwt";
 import { getUserProfile } from "~/utils/auth/getUserProfile";
 import { type LoginCredentials } from "~/types/user";
 
@@ -61,6 +61,22 @@ export async function POST(request: NextRequest) {
       userId: userAuth.id,
       username: userAuth.username,
       role: userAuth.role,
+    });
+
+    const refreshToken = await generateRefreshToken();
+
+    // CALCULATE EXPIRATION DATES
+    const refreshTokenExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 DAYS
+
+    // STORE REFRESH TOKEN AND SESSION INFO IN DATABASE
+    await db.session.create({
+      data: {
+        refreshToken,
+        userAuthId: userAuth.id,
+        deviceInfo: request.headers.get("user-agent") || undefined,
+        expiresAt: refreshTokenExpires,
+        lastUsed: new Date(),
+      },
     });
 
     // CREATE RESPONSE WITH USER DATA
